@@ -21,7 +21,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     val EMPTY = 0
     val CROSS = 1
     val CIRCLE = 2
-    var computer = ComputerPlayer();
 
 
 
@@ -44,10 +43,9 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         //val btn = findViewById<Button>(R.id.newGameButton)
         binding.newGameButton.setOnClickListener{reset()
             }
-
     }
 
-    fun reset(){
+    private fun reset(){
         counter = 0
         turn = PLAYER1
         Log.d("tag", "This is reset")
@@ -178,16 +176,15 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                     if (turn == 0) {
                         fields[4] = CROSS
                         image.setImageResource(R.drawable.kryds)
-                        computer.placeInCorner(fields, binding)
 
 
-                        //turn = 1
+                        turn = 1
                     }
-                    //                    else {
-//                        fields[4] = CIRCLE
-//                        image.setImageResource(R.drawable.bolle)
-//                        turn = 0
-//                    }
+                                        else {
+                        fields[4] = CIRCLE
+                        image.setImageResource(R.drawable.bolle)
+                        turn = 0
+                    }
                 }else Toast.makeText(applicationContext, "Theres already a tic or a toe here, choose an empty field", Toast.LENGTH_SHORT).show()
                 //then you need to update your field int[] array also to save the state
             }
