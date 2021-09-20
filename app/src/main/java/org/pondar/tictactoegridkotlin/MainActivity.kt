@@ -1,5 +1,6 @@
 package org.pondar.tictactoegridkotlin
 
+import android.database.CrossProcessCursor
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.transition.CircularPropagation
@@ -14,15 +15,14 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
 
     var turn = 0
     val PLAYER1 = 0
-    val PALYER2 = 1
+    val PLAYER2 = 1
     var counter = 0
     private var fields = IntArray(9)
-    lateinit var binding : ActivityMainBinding
+    lateinit var binding: ActivityMainBinding
     val EMPTY = 0
     val CROSS = 1
     val CIRCLE = 2
-    var computer = ComputerPlayer();
-
+    var computer = ComputerPlayer()
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,16 +42,19 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         binding.field7.setOnClickListener(this)
         binding.field8.setOnClickListener(this)
         //val btn = findViewById<Button>(R.id.newGameButton)
-        binding.newGameButton.setOnClickListener{reset()
-            }
+        binding.newGameButton.setOnClickListener {
+            reset()
+        }
+
+
 
     }
 
-    fun reset(){
+    private fun reset() {
         counter = 0
         turn = PLAYER1
         Log.d("tag", "This is reset")
-        for(i in fields.indices)
+        for (i in fields.indices)
             fields[i] = EMPTY
         //findViewById<ImageView>(R.id.field0)
         binding.field0.setImageResource(R.drawable.blank)
@@ -73,235 +76,119 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         // put a "O" or a "X" if there is already something.
 
         Log.d("counter: ", "$counter")
+        computer.computerMove = false
 
-        if(counter in 0..5) {
 
-            if (view?.id == R.id.field0) {
-                val image = view as ImageView
+            for (fieldIndex in 0..8) { // For each field
+                println("ViewID : ${view?.id}")
+                if (view?.id == getViewId(fieldIndex)) { // Find the pressed view
+                    val image = view as ImageView
+                    Log.d("Field_Clicked", "field 0 pressed")
 
-                Log.d("Field_Clicked", "field 0 pressed")
+                    if (counter in 0..2) {
 
-                //TODO something here
-                if (fields[0] == EMPTY) {
-                    counter++
-                    //An example of how to set the image is shown below
-                    //you of course need to check if the field is empty
-                    //before setting a new image
-                    //and also if the turn is X or O
-                    if (turn == PLAYER1) {
-                        fields[0] = CROSS
-                        image.setImageResource(R.drawable.kryds)
-                        turn = PALYER2
-                    } else {
-                        fields[0] = CIRCLE
-                        image.setImageResource(R.drawable.bolle)
-                        turn = PLAYER1
+                    if (fields[fieldIndex] == EMPTY) { // If field is empty
+                        if (turn == PLAYER1) {
+                            // Player do your move
+                            //--------------------------------------------
+                            fields[fieldIndex] = CROSS
+                            image.setImageResource(R.drawable.kryds)
+                            counter++
+                            checkWinner()
+
+                            // Computer do your move
+                            //--------------------------------------------
+                            computer.makeAMove(counter, fields, binding)
+                            checkWinner()
+                        }
+                    } else Toast.makeText(applicationContext,"Theres already a tic or a toe here, choose an empty field", Toast.LENGTH_SHORT).show()
+                    }  // if counter is 1..2 ends
+                    else {
+                        when {
+                            fields[fieldIndex] == CROSS -> {
+                                // Reset alle Cross billeder til not choosen
+                                for ((index, value) in fields.withIndex()){
+                                    println("$index, : : : $value")
+                                    if(value == CROSS){
+
+                                        // It has to change the imageView and not the number
+                                       if(findViewById<ImageView>(getViewId(index)).id == getViewId(index)){
+                                           findViewById<ImageView>(getViewId(index)).scaleType= ImageView.ScaleType.FIT_XY
+                                       }
+                                    }
+                                }
+
+                                // Gemme index på den der er klikket
+                                // Highlighte den valgte
+                                image.scaleType= ImageView.ScaleType.CENTER
+
+                            }
+                            fields[fieldIndex] == CIRCLE -> {
+                                // Hvis highlighted er valgt
+                                Toast.makeText(applicationContext,"You cannot put your pond here, choose an empty field", Toast.LENGTH_SHORT).show()
+                               // Ellers
+                                Toast.makeText(applicationContext,"Choose one of your own ponds to move", Toast.LENGTH_SHORT).show()
+                            }
+                            fields[fieldIndex] == EMPTY -> { // If field is empty
+
+                                // Hvis highlighted er valgt
+                                // Set Cross her og fjern fra highlighted
+                                // Reset highlighted value
+
+                                // ellers toast
+                                Toast.makeText(applicationContext,"Choose a pond to move", Toast.LENGTH_SHORT).show()
+                            }
+                        }
                     }
-                }else {Toast.makeText(applicationContext, "Theres already a tic or a toe here, choose an empty field", Toast.LENGTH_SHORT).show()}
-                //then you need to update your field int[] array also to save the state
+                }
             }
 
 
-
-            if (view?.id == R.id.field1) {
-                val image = view as ImageView
-
-                Log.d("Field_Clicked", "field 0 pressed")
-
-                //TODO something here
-                if (fields[1] == EMPTY) {
-                    counter++
-                    if (turn == 0) {
-                        fields[1] = CROSS
-                        image.setImageResource(R.drawable.kryds)
-                        turn = 1
-                    } else {
-                        fields[1] = CIRCLE
-                        image.setImageResource(R.drawable.bolle)
-                        turn = 0
-                    }
-                }else {Toast.makeText(applicationContext, "Theres already a tic or a toe here, choose an empty field", Toast.LENGTH_SHORT).show()}
-                //then you need to update your field int[] array also to save the state
-            }
-
-            if (view?.id == R.id.field2) {
-                val image = view as ImageView
-
-                Log.d("Field_Clicked", "field 0 pressed")
-
-                //TODO something here
-                if (fields[2] == EMPTY) {
-                    counter++
-                    if (turn == PLAYER1) {
-                        fields[2] = CROSS
-                        image.setImageResource(R.drawable.kryds)
-                        turn = 1
-                    } else {
-                        fields[2] = CIRCLE
-                        image.setImageResource(R.drawable.bolle)
-                        turn = 0
-                    }
-                }else Toast.makeText(applicationContext, "Theres already a tic or a toe here, choose an empty field", Toast.LENGTH_SHORT).show()
-                //then you need to update your field int[] array also to save the state
-            }
-
-
-            if (view?.id == R.id.field3) {
-                val image = view as ImageView
-
-                Log.d("Field_Clicked", "field 0 pressed")
-
-                //TODO something here
-                if (fields[3] == EMPTY) {
-                    counter++
-                    if (turn == 0) {
-                        fields[3] = CROSS
-                        image.setImageResource(R.drawable.kryds)
-                        turn = 1
-                    } else {
-                        fields[3] = CIRCLE
-                        image.setImageResource(R.drawable.bolle)
-                        turn = 0
-                    }
-                }else Toast.makeText(applicationContext, "Theres already a tic or a toe here, choose an empty field", Toast.LENGTH_SHORT).show()
-                //then you need to update your field int[] array also to save the state
-            }
-
-            if (view?.id == R.id.field4) {
-                val image = view as ImageView
-
-                Log.d("Field_Clicked", "field 0 pressed")
-
-                //TODO something here
-                if (fields[4] == EMPTY) {
-                    counter++
-                    if (turn == 0) {
-                        fields[4] = CROSS
-                        image.setImageResource(R.drawable.kryds)
-                        computer.placeInCorner(fields, binding)
-
-
-                        //turn = 1
-                    }
-                    //                    else {
-//                        fields[4] = CIRCLE
-//                        image.setImageResource(R.drawable.bolle)
-//                        turn = 0
-//                    }
-                }else Toast.makeText(applicationContext, "Theres already a tic or a toe here, choose an empty field", Toast.LENGTH_SHORT).show()
-                //then you need to update your field int[] array also to save the state
-            }
-            if (view?.id == R.id.field5) {
-                val image = view as ImageView
-
-                Log.d("Field_Clicked", "field 0 pressed")
-
-                //TODO something here
-                if (fields[5] == EMPTY) {
-                    counter++
-                    if (turn == 0) {
-                        fields[5] = CROSS
-                        image.setImageResource(R.drawable.kryds)
-                        turn = 1
-                    } else {
-                        fields[5] = CIRCLE
-                        image.setImageResource(R.drawable.bolle)
-                        turn = 0
-                    }
-                }else Toast.makeText(applicationContext, "Theres already a tic or a toe here, choose an empty field", Toast.LENGTH_SHORT).show()
-                //then you need to update your field int[] array also to save the state
-            }
-
-            if (view?.id == R.id.field6) {
-                val image = view as ImageView
-
-                Log.d("Field_Clicked", "field 0 pressed")
-
-                //TODO something here
-                if (fields[6] == EMPTY) {
-                    counter++
-                    if (turn == 0) {
-                        fields[6] = CROSS
-                        image.setImageResource(R.drawable.kryds)
-                        turn = 1
-                    } else {
-                        fields[6] = CIRCLE
-                        image.setImageResource(R.drawable.bolle)
-                        turn = 0
-                    }
-                }else Toast.makeText(applicationContext, "Theres already a tic or a toe here, choose an empty field", Toast.LENGTH_SHORT).show()
-                //then you need to update your field int[] array also to save the state
-            }
-
-            if (view?.id == R.id.field7) {
-                val image = view as ImageView
-
-                Log.d("Field_Clicked", "field 0 pressed")
-
-                //TODO something here
-                if (fields[7] == EMPTY) {
-                    counter++
-                    if (turn == 0) {
-                        fields[7] = CROSS
-                        image.setImageResource(R.drawable.kryds)
-                        turn = 1
-                    } else {
-                        fields[7] = CIRCLE
-                        image.setImageResource(R.drawable.bolle)
-                        turn = 0
-                    }
-                }else Toast.makeText(applicationContext, "Theres already a tic or a toe here, choose an empty field", Toast.LENGTH_SHORT).show()
-                //then you need to update your field int[] array also to save the state
-            }
-
-            if (view?.id == R.id.field8) {
-                val image = view as ImageView
-
-                Log.d("Field_Clicked", "field 0 pressed")
-
-                //TODO something here
-                if (fields[8] == EMPTY) {
-                    counter++
-                    if (turn == 0) {
-                        fields[8] = CROSS
-                        image.setImageResource(R.drawable.kryds)
-                        turn = 1
-                    } else {
-                        fields[8] = CIRCLE
-                        image.setImageResource(R.drawable.bolle)
-                        turn = 0
-                    }
-                }else Toast.makeText(applicationContext, "Theres already a tic or a toe here, choose an empty field", Toast.LENGTH_SHORT).show()
-                //then you need to update your field int[] array also to save the state
-
-
-            }
-
-
-        }else{
-
-            Log.d("Game over", "Gameover and maybe something won")
-        }
-        checkWinner()
     } //end of clicklistener
 
-    private fun checkWinner(){
-if(fields[0] != EMPTY && fields[0] == fields[1] && fields[0] == fields[2] ||
-    fields[3] != EMPTY && fields[3] == fields[4] && fields[3] == fields[5] ||
-    fields[6] != EMPTY && fields[6] == fields[7] && fields[6] == fields[8] ||
-    fields[0] != EMPTY && fields[0] == fields[3] && fields[0] == fields[6] ||
-    fields[1] != EMPTY && fields[1] == fields[4] && fields[1] == fields[7] ||
-    fields[2] != EMPTY && fields[2] == fields[5] && fields[2] == fields[8] ||
-    fields[0] != EMPTY && fields[0] == fields[4] && fields[0] == fields[8] ||
-    fields[2] != EMPTY && fields[2] == fields[4] && fields[2] == fields[6]
-){
-    // empty 0, cross 1, circle 2
-        counter = 9
-    if(turn == PLAYER1)
-            Toast.makeText(applicationContext, "Player2 is the winner", Toast.LENGTH_SHORT).show()
-else
-        Toast.makeText(applicationContext, "Player1 is the winner", Toast.LENGTH_SHORT).show()
+    private fun checkWinner() {
+        if (fields[0] != EMPTY && fields[0] == fields[1] && fields[0] == fields[2] ||
+            fields[3] != EMPTY && fields[3] == fields[4] && fields[3] == fields[5] ||
+            fields[6] != EMPTY && fields[6] == fields[7] && fields[6] == fields[8] ||
+            fields[0] != EMPTY && fields[0] == fields[3] && fields[0] == fields[6] ||
+            fields[1] != EMPTY && fields[1] == fields[4] && fields[1] == fields[7] ||
+            fields[2] != EMPTY && fields[2] == fields[5] && fields[2] == fields[8] ||
+            fields[0] != EMPTY && fields[0] == fields[4] && fields[0] == fields[8] ||
+            fields[2] != EMPTY && fields[2] == fields[4] && fields[2] == fields[6]
+        ) {
+            // empty 0, cross 1, circle 2
+            counter = 9
+            when (turn) {
+                PLAYER1 -> {
+                    Toast.makeText(applicationContext, "Player1 is the winner", Toast.LENGTH_SHORT)
+                        .show()
+                }
+                PLAYER2 -> {
+                    Toast.makeText(applicationContext, "Player2 is the winner", Toast.LENGTH_SHORT)
+                        .show()
+                }
+                else -> {
+                    Toast.makeText(applicationContext, "Its a tie", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }else{
+            if(turn == PLAYER1) turn = PLAYER2
+            else if(turn == PLAYER2) turn = PLAYER1
+        }
     }
 
+    private fun getViewId(index: Int) : Int {
+        return when (index) {
+            0 -> R.id.field0
+            1 -> R.id.field1
+            2 -> R.id.field2
+            3 -> R.id.field3
+            4 -> R.id.field4
+            5 -> R.id.field5
+            6 -> R.id.field6
+            7 -> R.id.field7
+            8 -> R.id.field8
+            else -> R.id.field0
+        }
     }
 }
