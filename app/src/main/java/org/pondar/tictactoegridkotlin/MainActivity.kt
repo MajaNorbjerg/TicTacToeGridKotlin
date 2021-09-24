@@ -1,6 +1,8 @@
 package org.pondar.tictactoegridkotlin
 
 import android.database.CrossProcessCursor
+import android.graphics.Color
+import android.graphics.ColorSpace
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.transition.CircularPropagation
@@ -10,12 +12,15 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.Toast
 import org.pondar.tictactoegridkotlin.databinding.ActivityMainBinding
+import android.os.Handler
+import android.os.Looper
 
 class MainActivity : AppCompatActivity(), View.OnClickListener {
 
     var turn = 0
     val PLAYER1 = 0
     val PLAYER2 = 1
+    var winnerHasBeenFound = false
     var counter = 0
     private var fields = IntArray(9)
     lateinit var binding: ActivityMainBinding
@@ -23,6 +28,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     val CROSS = 1
     val CIRCLE = 2
     var computer = ComputerPlayer()
+    private var chosenField: Int? = null
+    private val handler = Handler(Looper.getMainLooper())
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,25 +54,29 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         }
 
 
-
     }
 
     private fun reset() {
         counter = 0
+        winnerHasBeenFound = false
         turn = PLAYER1
         Log.d("tag", "This is reset")
-        for (i in fields.indices)
+        for (i in fields.indices) {
             fields[i] = EMPTY
-        //findViewById<ImageView>(R.id.field0)
-        binding.field0.setImageResource(R.drawable.blank)
-        binding.field1.setImageResource(R.drawable.blank)
-        binding.field2.setImageResource(R.drawable.blank)
-        binding.field3.setImageResource(R.drawable.blank)
-        binding.field4.setImageResource(R.drawable.blank)
-        binding.field5.setImageResource(R.drawable.blank)
-        binding.field6.setImageResource(R.drawable.blank)
-        binding.field7.setImageResource(R.drawable.blank)
-        binding.field8.setImageResource(R.drawable.blank)
+            resetChosen(i)
+        }
+        binding.newGameButton.setBackgroundColor(Color.LTGRAY)
+        binding.whatToDoText.text = "Try tic tac toe again, press a field to start"
+
+        binding.field0.setImageDrawable(null)
+        binding.field1.setImageDrawable(null)
+        binding.field2.setImageDrawable(null)
+        binding.field3.setImageDrawable(null)
+        binding.field4.setImageDrawable(null)
+        binding.field5.setImageDrawable(null)
+        binding.field6.setImageDrawable(null)
+        binding.field7.setImageDrawable(null)
+        binding.field8.setImageDrawable(null)
     }
 
     override fun onClick(view: View?) {
@@ -79,72 +90,143 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         computer.computerMove = false
 
 
-            for (fieldIndex in 0..8) { // For each field
-                println("ViewID : ${view?.id}")
-                if (view?.id == getViewId(fieldIndex)) { // Find the pressed view
-                    val image = view as ImageView
-                    Log.d("Field_Clicked", "field 0 pressed")
-
+        for (fieldIndex in 0..8) { // For each field
+            println("ViewID : ${view?.id}")
+            if (view?.id == getViewId(fieldIndex)) { // Find the pressed view
+                val image = view as ImageView
+                Log.d("Field_Clicked", "field 0 pressed")
+                if (!winnerHasBeenFound) {
                     if (counter in 0..2) {
 
-                    if (fields[fieldIndex] == EMPTY) { // If field is empty
-                        if (turn == PLAYER1) {
-                            // Player do your move
-                            //--------------------------------------------
-                            fields[fieldIndex] = CROSS
-                            image.setImageResource(R.drawable.kryds)
-                            counter++
-                            checkWinner()
+                        if (fields[fieldIndex] == EMPTY) { // If field is empty
+                            if (turn == PLAYER1) {
+                                // Player do your move
+                                //--------------------------------------------
+                                fields[fieldIndex] = CROSS
+                                image.setImageResource(R.drawable.kryds)
+                                counter++
+                                checkWinner()
 
-                            // Computer do your move
-                            //--------------------------------------------
-                            computer.makeAMove(counter, fields, binding)
-                            checkWinner()
-                        }
-                    } else Toast.makeText(applicationContext,"Theres already a tic or a toe here, choose an empty field", Toast.LENGTH_SHORT).show()
+                                // Computer do your move
+                                //--------------------------------------------
+                                handler.postDelayed({
+                                    computer.makeAMove(counter, fields, binding)
+                                    checkWinner()
+                                },400)
+                            }else {
+                                Toast.makeText(
+                                    applicationContext,
+                                    "It´s sushi´s turn",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        } else Toast.makeText(
+                            applicationContext,
+                            "Theres already a tic or a toe here, choose an empty field",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        if(counter == 1)
+                            binding.whatToDoText.text = "Nice you are the sticks"
+
+
                     }  // if counter is 1..2 ends
                     else {
-                        when {
-                            fields[fieldIndex] == CROSS -> {
-                                // Reset alle Cross billeder til not choosen
-                                for ((index, value) in fields.withIndex()){
-                                    println("$index, : : : $value")
-                                    if(value == CROSS){
 
-                                        // It has to change the imageView and not the number
-                                       if(findViewById<ImageView>(getViewId(index)).id == getViewId(index)){
-                                           findViewById<ImageView>(getViewId(index)).scaleType= ImageView.ScaleType.FIT_XY
-                                       }
+                        if (turn == PLAYER1) {
+                            when {
+                                fields[fieldIndex] == CROSS -> {
+                                    chosenField = fieldIndex // Save index of the chosen one
+
+
+                                    // Reset all Crosses to not chosen
+                                    for ((index, value) in fields.withIndex()) {
+                                        println("$index, : : : $value")
+                                        if (value == CROSS) {
+                                            // It has to change the imageView and not the number
+                                            resetChosen(index)
+                                        }
+                                    }
+
+                                   image.setBackgroundResource(R.drawable.selected)
+                                    binding.whatToDoText.text = "Chose a place to put them, or some other sticks"
+                                }
+                                fields[fieldIndex] == CIRCLE -> {
+                                    // Hvis highlighted er valgt
+                                    Toast.makeText(
+                                        applicationContext,
+                                        "You cannot put your pond here, choose an empty field",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    // Ellers
+                                    Toast.makeText(
+                                        applicationContext,
+                                        "Choose one of your own ponds to move",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                                fields[fieldIndex] == EMPTY -> { // If field is empty
+
+                                    if (chosenField != null) { // If highlighted is chosen
+
+                                        // Reset all Crosses to not chosen
+                                        findViewById<ImageView>(getViewId(chosenField!!)).setBackgroundResource(R.drawable.border)
+
+                                        findViewById<ImageView>(getViewId(chosenField!!)).setImageDrawable(
+                                            null
+                                        )
+
+                                        fields[chosenField!!] =
+                                            EMPTY // Remove pond from highlighted
+                                        fields[fieldIndex] = CROSS // Add new pond
+
+                                        image.setImageResource(R.drawable.kryds) // Set new x
+                                        counter++
+                                        chosenField = null
+                                        checkWinner()
+
+
+                                        // Computer do your move
+                                        //--------------------------------------------
+                                        handler.postDelayed({
+                                            computer.makeAMove(counter, fields, binding)
+                                            checkWinner()
+                                        },400)
+
+                                    } else if (chosenField == null) {
+                                        Toast.makeText(
+                                            applicationContext,
+                                            "Choose a pond to move",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
                                     }
                                 }
-
-                                // Gemme index på den der er klikket
-                                // Highlighte den valgte
-                                image.scaleType= ImageView.ScaleType.CENTER
-
                             }
-                            fields[fieldIndex] == CIRCLE -> {
-                                // Hvis highlighted er valgt
-                                Toast.makeText(applicationContext,"You cannot put your pond here, choose an empty field", Toast.LENGTH_SHORT).show()
-                               // Ellers
-                                Toast.makeText(applicationContext,"Choose one of your own ponds to move", Toast.LENGTH_SHORT).show()
-                            }
-                            fields[fieldIndex] == EMPTY -> { // If field is empty
-
-                                // Hvis highlighted er valgt
-                                // Set Cross her og fjern fra highlighted
-                                // Reset highlighted value
-
-                                // ellers toast
-                                Toast.makeText(applicationContext,"Choose a pond to move", Toast.LENGTH_SHORT).show()
-                            }
+                        } else {
+                            Toast.makeText(
+                                applicationContext,
+                                "It´s sushi´s turn",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
                     }
-                }
+                }else{Toast.makeText(
+                    applicationContext,
+                    "There´s already a winner",
+                    Toast.LENGTH_SHORT
+                ).show()}
             }
+        }
 
 
     } //end of clicklistener
+
+    private fun resetChosen(index: Int) {
+
+
+        if (findViewById<ImageView>(getViewId(index)).id == getViewId(index)) {
+            findViewById<ImageView>(getViewId(index)).setBackgroundResource(R.drawable.border)
+        }
+    }
 
     private fun checkWinner() {
         if (fields[0] != EMPTY && fields[0] == fields[1] && fields[0] == fields[2] ||
@@ -157,27 +239,31 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             fields[2] != EMPTY && fields[2] == fields[4] && fields[2] == fields[6]
         ) {
             // empty 0, cross 1, circle 2
-            counter = 9
+            winnerHasBeenFound = true
+            binding.newGameButton.setBackgroundColor(Color.rgb(100,240,100))
+
             when (turn) {
                 PLAYER1 -> {
-                    Toast.makeText(applicationContext, "Player1 is the winner", Toast.LENGTH_SHORT)
+                    Toast.makeText(applicationContext, "Chopsticks is the winner", Toast.LENGTH_SHORT)
                         .show()
+                    binding.whatToDoText.text = "Congratulations to you! Chopsticks is the winner"
                 }
                 PLAYER2 -> {
-                    Toast.makeText(applicationContext, "Player2 is the winner", Toast.LENGTH_SHORT)
+                    Toast.makeText(applicationContext, "Sushi is the winner", Toast.LENGTH_SHORT)
                         .show()
+                    binding.whatToDoText.text = "Better luck next time! Sushi is the winner"
                 }
                 else -> {
                     Toast.makeText(applicationContext, "Its a tie", Toast.LENGTH_SHORT).show()
                 }
             }
-        }else{
-            if(turn == PLAYER1) turn = PLAYER2
-            else if(turn == PLAYER2) turn = PLAYER1
+        } else {
+            if (turn == PLAYER1) turn = PLAYER2
+            else if (turn == PLAYER2) turn = PLAYER1
         }
     }
 
-    private fun getViewId(index: Int) : Int {
+    private fun getViewId(index: Int): Int {
         return when (index) {
             0 -> R.id.field0
             1 -> R.id.field1

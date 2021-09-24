@@ -3,7 +3,10 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
-        <entry key="..\:/Users/mnoer/Documents/EAAA/AndroidProjects/TicTacToeGridKotlin/app/src/main/res/layout/activity_main.xml" value="0.13020833333333334" />
+        <entry key="..\:/Users/mnoer/Documents/EAAA/AndroidProjects/TicTacToeGridKotlin/app/src/main/res/drawable/border.xml" value="0.22083333333333333" />
+        <entry key="..\:/Users/mnoer/Documents/EAAA/AndroidProjects/TicTacToeGridKotlin/app/src/main/res/drawable/selected.xml" value="0.22083333333333333" />
+        <entry key="..\:/Users/mnoer/Documents/EAAA/AndroidProjects/TicTacToeGridKotlin/app/src/main/res/layout/activity_main.xml" value="0.264" />
+        <entry key="..\:/Users/mnoer/Documents/EAAA/AndroidProjects/TicTacToeGridKotlin/app/src/main/res/layout/border.xml" value="0.2046875" />
       </map>
     </option>
   </component>
